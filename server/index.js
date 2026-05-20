@@ -16,18 +16,10 @@ validateEnv();
 const app = express();
 const PORT = Number(process.env.PORT) || 5000;
 
-// التعديل هنا: إعداد الـ CORS الديناميكي الجديد
+// التعديل هنا: إعداد الـ CORS لدعم الواجهة الأمامية من أي أصل
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // السماح بالطلبات بدون origin (زي الـ Postman أو أدوات الاختبار)
-      // أو الطلبات القادمة من localhost أو أي دومين ينتهي بـ .vercel.app
-      if (!origin || origin.startsWith('http://localhost') || origin.endsWith('.vercel.app')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: true,
     credentials: true,
   })
 );

@@ -1,11 +1,41 @@
-import { Link } from 'react-router-dom';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowRight, Sparkles, UserRound } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
+import { useToast } from '../context/ToastContext.jsx';
 import usePageTitle from '../hooks/usePageTitle.js';
+import ButtonSpinner from '../components/ui/ButtonSpinner.jsx';
+
+const GUEST_EMAIL = import.meta.env.VITE_GUEST_EMAIL;
+const GUEST_PASSWORD = import.meta.env.VITE_GUEST_PASSWORD;
 
 export default function Home() {
   usePageTitle('Home');
-  const { isAuthenticated } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const { error: toastError, success } = useToast();
+  const navigate = useNavigate();
+  const [guestLoading, setGuestLoading] = useState(false);
+
+  const handleGuestLogin = async () => {
+    if (!GUEST_EMAIL?.trim() || !GUEST_PASSWORD) {
+      const msg =
+        'Guest login is not configured. Add VITE_GUEST_EMAIL and VITE_GUEST_PASSWORD to client/.env';
+      toastError(msg);
+      return;
+    }
+
+    setGuestLoading(true);
+    try {
+      await login(GUEST_EMAIL.trim(), GUEST_PASSWORD);
+      success('Opening the guest workspace…');
+      navigate('/dashboard', { replace: true });
+    } catch (err) {
+      const msg = err.response?.data?.message || 'Guest login failed. Please try again.';
+      toastError(msg);
+    } finally {
+      setGuestLoading(false);
+    }
+  };
 
   return (
     <div className="page-enter py-8 sm:py-16">
@@ -31,6 +61,26 @@ export default function Home() {
             {isAuthenticated ? 'Open dashboard' : 'Get started free'}
             <ArrowRight className="h-4 w-4" />
           </Link>
+          {!isAuthenticated && (
+            <button
+              type="button"
+              onClick={handleGuestLogin}
+              disabled={guestLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-accent/40 bg-accent/10 px-6 py-3 text-sm font-semibold text-accent-glow transition-all hover:border-accent/60 hover:bg-accent/15 hover:shadow-glow-sm disabled:cursor-not-allowed disabled:opacity-50 btn-press sm:w-auto"
+            >
+              {guestLoading ? (
+                <>
+                  <ButtonSpinner />
+                  Opening guest workspace…
+                </>
+              ) : (
+                <>
+                  <UserRound className="h-4 w-4" />
+                  View demo workspace
+                </>
+              )}
+            </button>
+          )}
           {!isAuthenticated && (
             <Link
               to="/login"
