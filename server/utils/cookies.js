@@ -1,12 +1,15 @@
 const COOKIE_NAME = 'token';
 
+const isSecureCookie =
+  process.env.NODE_ENV === 'production' || process.env.USE_SECURE_COOKIES === 'true';
+
 export function getCookieOptions() {
   const maxAge = parseMaxAge(process.env.JWT_EXPIRES_IN || '7d');
 
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: isSecureCookie,
+    sameSite: isSecureCookie ? 'none' : 'lax',
     maxAge,
     path: '/',
   };
@@ -30,8 +33,8 @@ export function setAuthCookie(res, token) {
 export function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    secure: isSecureCookie,
+    sameSite: isSecureCookie ? 'none' : 'lax',
     path: '/',
   });
 }
