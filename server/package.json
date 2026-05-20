@@ -8,7 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "db:init": "node db/init.js",
-    "db:seed": "node db/init.js",
+    "db:seed": "node db/init.js --seed-only",
     "db:setup": "node db/init.js"
   },
   "dependencies": {
