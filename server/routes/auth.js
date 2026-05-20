@@ -45,7 +45,8 @@ router.post('/register', async (req, res, next) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
-    res.status(201).json({ user });
+    // Return both token and user for cross-domain auth fallback
+    res.status(201).json({ user, token });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ message: 'Email already registered' });
@@ -81,7 +82,8 @@ router.post('/login', async (req, res, next) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
-    res.json({ user });
+    // Return both token and user for cross-domain auth fallback
+    res.json({ user, token });
   } catch (err) {
     next(err);
   }
