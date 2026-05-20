@@ -11,6 +11,9 @@ api.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    console.log('🔑 Token added to request:', { url: config.url, tokenLength: token.length });
+  } else {
+    console.log('⚠️  No token in localStorage for request:', config.url);
   }
   return config;
 });
@@ -22,12 +25,16 @@ api.interceptors.response.use(
     const token = response.data?.token || response.headers['x-auth-token'];
     if (token) {
       localStorage.setItem('auth_token', token);
+      console.log('💾 Token saved to localStorage:', { tokenLength: token.length });
+    } else {
+      console.log('ℹ️  No token in response:', { url: response.config.url });
     }
     return response;
   },
   (error) => {
     // Clear token on 401 Unauthorized
     if (error.response?.status === 401) {
+      console.log('❌ 401 Error - clearing token:', { url: error.config?.url });
       localStorage.removeItem('auth_token');
     }
     return Promise.reject(error);

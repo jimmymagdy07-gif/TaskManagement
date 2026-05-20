@@ -23,12 +23,15 @@ function sanitizeUser(row) {
 router.post('/register', async (req, res, next) => {
   try {
     const { name, email, password } = req.body;
+    console.log('📝 Register attempt:', { name, email });
 
     if (!name?.trim() || !email?.trim() || !password) {
+      console.log('❌ Missing registration fields');
       return res.status(400).json({ message: 'Name, email, and password are required' });
     }
 
     if (password.length < 6) {
+      console.log('❌ Password too short:', { email });
       return res.status(400).json({ message: 'Password must be at least 6 characters' });
     }
 
@@ -45,12 +48,16 @@ router.post('/register', async (req, res, next) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
+    console.log('✅ Registration successful:', { userId: user.id, email: user.email });
+
     // Return both token and user for cross-domain auth fallback
     res.status(201).json({ user, token });
   } catch (err) {
     if (err.code === '23505') {
+      console.log('❌ Email already registered:', { email: req.body.email });
       return res.status(409).json({ message: 'Email already registered' });
     }
+    console.error('❌ Register error:', err);
     next(err);
   }
 });
@@ -58,8 +65,10 @@ router.post('/register', async (req, res, next) => {
 router.post('/login', async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    console.log('📝 Login attempt:', { email });
 
     if (!email?.trim() || !password) {
+      console.log('❌ Missing credentials');
       return res.status(400).json({ message: 'Email and password are required' });
     }
 
@@ -70,11 +79,13 @@ router.post('/login', async (req, res, next) => {
 
     const row = result.rows[0];
     if (!row) {
+      console.log('❌ User not found:', { email });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
     const valid = await bcrypt.compare(password, row.password_hash);
     if (!valid) {
+      console.log('❌ Invalid password:', { email });
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
@@ -82,9 +93,12 @@ router.post('/login', async (req, res, next) => {
     const token = signToken(user);
     setAuthCookie(res, token);
 
+    console.log('✅ Login successful:', { userId: user.id, email: user.email, tokenLength: token.length });
+
     // Return both token and user for cross-domain auth fallback
     res.json({ user, token });
   } catch (err) {
+    console.error('❌ Login error:', err);
     next(err);
   }
 });
@@ -96,6 +110,7 @@ router.post('/logout', (_req, res) => {
 
 router.get('/me', verifyToken, async (req, res, next) => {
   try {
+    console.log('📝 Fetching user info:', { userId: req.user.id });
     const result = await pool.query(
       'SELECT id, name, email, avatar_url, created_at FROM users WHERE id = $1',
       [req.user.id]
@@ -103,11 +118,14 @@ router.get('/me', verifyToken, async (req, res, next) => {
 
     const user = result.rows[0];
     if (!user) {
+      console.log('❌ User not found:', { userId: req.user.id });
       return res.status(404).json({ message: 'User not found' });
     }
 
+    console.log('✅ User info fetched:', { userId: user.id, email: user.email });
     res.json({ user });
   } catch (err) {
+    console.error('❌ Fetch user error:', err);
     next(err);
   }
 });
